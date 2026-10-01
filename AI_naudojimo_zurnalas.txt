@@ -1,0 +1,145 @@
+AI NAUDOJIMO ŽURNALAS
+Projektas: Dviračių nuomos paklausos prognozavimas
+Dalykas: Intelektualiosios sistemos
+Data: 2026
+
+1. AI NAUDOJIMO PRINCIPAS
+
+Generatyvinis AI (ChatGPT) buvo naudojamas kaip pagalbinė priemonė planuojant eksperimentus,
+aiškinant metodus, rengiant ir tikrinant Python/Jupyter kodą, formuluojant rezultatų interpretacijas
+bei ieškant techninių klaidų. AI sugeneruotas kodas ar tekstas nebuvo laikomas įrodymu savaime.
+Pasiūlymai buvo tikrinami paleidžiant kodą, lyginant gautus rezultatus, tikrinant duomenų skaidymą
+ir, kai reikėjo, taisant AI pasiūlytą realizaciją.
+
+Galutiniai skaitiniai rezultatai šiame projekte yra gauti realiai paleidus Notebook kodą.
+TEST duomenys nebuvo naudojami hiperparametrų paieškai.
+
+2. SVARBIAUSIOS AI UŽKLAUSOS IR SPRENDIMAI
+
+Užklausa / tikslas:
+Parengti bendrą duomenų paruošimo grandinę dviračių paklausos prognozavimui ir išvengti
+duomenų nutekėjimo.
+
+Priimta:
+- chronologinis DEV ir TEST skaidymas;
+- rolling-origin vertinimas DEV dalyje;
+- lag ir rolling požymiai sudaromi tik iš ankstesnių laiko momentų;
+- casual ir registered nenaudojami, nes jų suma sudaro tikslinį cnt;
+- piko slenkstis skaičiuojamas tik iš mokymo duomenų.
+
+Patikra:
+01 Notebook atliktos chronologijos ir nutekėjimo patikros.
+
+
+Užklausa / tikslas:
+Patobulinti MLP modelį ir palyginti kelias konfigūracijas vienodomis DEV sąlygomis.
+
+Priimta:
+- SimpleImputer + StandardScaler + MLPRegressor grandinė;
+- hiperparametrų paieška tik DEV rolling-origin skaidiniuose;
+- geriausia konfigūracija parenkama pagal DEV MAE.
+
+Atmesta / nenaudota:
+- modelio parinkimas pagal galutinį TEST;
+- atsitiktinis laiko eilučių train/test sumaišymas.
+
+
+Užklausa / tikslas:
+Patobulinti CatBoost hiperparametrų paiešką.
+
+Priimta:
+- pradinis parametrų tinklas;
+- papildoma Optuna TPE paieška DEV dalyje;
+- kiekviena konfigūracija vertinama tais pačiais chronologiniais skaidiniais;
+- pagrindinis optimizavimo kriterijus – DEV MAE.
+
+Patikra:
+Optuna rezultatas lygintas su pradinės paieškos rezultatu; TEST paieškai nenaudotas.
+
+
+Užklausa / tikslas:
+Sukurti optimizuotą GBR + HGBR Voting ansamblį.
+
+Priimta:
+- atskiras GBR ir HGBR parametrų derinimas DEV dalyje;
+- trūkstamų reikšmių užpildymas medianomis, išmoktomis tik TRAIN dalyje;
+- ansamblio formulė: y_hat = w*y_hat_GBR + (1-w)*y_hat_HGBR;
+- svoris w optimizuojamas tik DEV.
+
+Atmesta:
+- atskirai ir nepriklausomai naudoti du ansamblio svorius, kurių suma nebūtinai lygi 1.
+
+
+Užklausa / tikslas:
+Įgyvendinti N-BEATS tipo modelį ir susieti formulę su kodu.
+
+Priimta:
+- lengva N-BEATS tipo, o ne oficialios architektūros kopija;
+- backcast liekana perduodama kitam blokui;
+- blokų forecast sumuojamas;
+- hiperparametrai parenkami DEV dalyje pagal MAE;
+- 24 ir 168 val. istorijos langų palyginimas kaip abliacija;
+- 5 % trūkstamų sekos reikšmių bandymas kaip atsparumo eksperimentas.
+
+Atmesta:
+- teiginys, kad ši realizacija yra identiška oficialiam N-BEATS;
+- oro požymių abliacija N-BEATS modeliui, nes ši realizacija naudoja tik tikslinės sekos istoriją.
+
+
+Užklausa / tikslas:
+Įvertinti PUR ir nuspręsti, ar pagal jį rinkti galutinį modelį.
+
+Iš pradžių AI pasiūlė:
+specialų piko svorių optimizavimą, kad būtų mažinamas PUR.
+
+Atmesta:
+šis pasiūlymas nebuvo paliktas galutinėje metodikoje, nes užduoties pagrindinės metrikos yra
+MAE, RMSE ir klaidų analizė piko metu. PUR paliktas tik kaip papildoma diagnostinė metrika.
+Modeliai parenkami pagal DEV MAE.
+
+
+3. APTIKTOS AI KLAIDOS IR JŲ PATIKRA
+
+AI klaida Nr. 1 – Voting ir NaN reikšmės
+Problema:
+AI sugeneruotas GradientBoostingRegressor kodas iš pradžių gavo NaN reikšmes ir baigė darbą
+ValueError klaida.
+
+Kaip aptikta:
+klaida pasirodė realiai paleidus Notebook.
+
+Kaip patikrinta ir pataisyta:
+pridėtas SimpleImputer(strategy="median"). Kiekviename rolling-origin skaidinyje imputer
+fit atliekamas tik TRAIN dalyje, o VALID/TEST tik transformuojamas. Taip išvengta nutekėjimo.
+
+
+AI klaida Nr. 2 – netinkama N-BEATS abliacijos idėja
+Problema:
+AI pasiūlė N-BEATS abliaciją pašalinant oro požymius, nors sukurta N-BEATS realizacija
+naudoja tik ankstesnę paklausos seką ir oro požymių neturi.
+
+Kaip aptikta:
+palyginta modelio įvestis su pasiūlyta eksperimento formuluote.
+
+Kaip pataisyta:
+abliacija pakeista į 24 val. ir 168 val. retrospektyvaus istorijos lango palyginimą.
+
+
+4. REZULTATŲ TIKRINIMAS
+
+Tikrinant AI pagalba parengtą sprendimą buvo:
+- realiai paleidžiami Notebook;
+- tikrinama, ar TRAIN yra ankstesnis už VALID/TEST;
+- tikrinama, ar TEST nenaudojamas hiperparametrų paieškai;
+- visi modeliai galutiniame palyginime vertinami tais pačiais TEST laiko momentais;
+- lyginamos MAE, RMSE ir piko klaidos;
+- PUR interpretuojamas tik kaip papildoma diagnostika;
+- analizuojamos didžiausios absoliučios prognozavimo klaidos;
+- fiksuojama atsitiktinė sėkla SEED = 42.
+
+5. GALUTINĖ AI NAUDOJIMO IŠVADA
+
+AI pagreitino kodo rengimą, eksperimentų planavimą ir klaidų paiešką, tačiau keli AI pasiūlymai
+buvo techniškai arba metodologiškai netinkami. Jie buvo aptikti tikrinant kodą ir lyginant
+eksperimentų logiką. Todėl galutiniame projekte palikti tik realiai patikrinti sprendimai, o
+AI sugeneruoti rezultatai nebuvo naudojami kaip įrodymas be faktinio kodo paleidimo.

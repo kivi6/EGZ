@@ -1,0 +1,90 @@
+ŠALTINIAI
+
+1. DUOMENŲ RINKINYS
+
+Fanaee-T, H. (2013). Bike Sharing [Dataset]. UCI Machine Learning Repository.
+DOI: https://doi.org/10.24432/C5W894
+UCI puslapis: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
+
+Naudojimas projekte:
+Naudojamas `hour.csv` failas su valandiniais dviračių nuomos duomenimis, kalendoriniais ir
+meteorologiniais požymiais. Tikslas sudaromas iš bendro nuomų skaičiaus `cnt`. `casual` ir
+`registered` modelių požymiams nenaudojami.
+
+
+2. N-BEATS
+
+Oreshkin, B. N., Carpov, D., Chapados, N., Bengio, Y. (2020).
+N-BEATS: Neural basis expansion analysis for interpretable time series forecasting.
+International Conference on Learning Representations (ICLR 2020).
+Preprint: https://arxiv.org/abs/1905.10437
+Autorių / oficialios realizacijos repozitorija:
+https://github.com/ServiceNow/N-BEATS
+
+Naudojimas projekte:
+Šaltiniu remiamasi aiškinant N-BEATS backcast/forecast ir liekanų principą.
+Projekte naudojama supaprastinta N-BEATS tipo bendrosios architektūros realizacija,
+todėl ji nėra pristatoma kaip identiška oficialiai autorių realizacijai.
+
+
+3. CATBOOST
+
+Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., Gulin, A. (2018).
+CatBoost: unbiased boosting with categorical features.
+Advances in Neural Information Processing Systems 31 (NeurIPS 2018).
+https://proceedings.neurips.cc/paper/2018/hash/14491b756b3a51daac41c24863285549-Abstract.html
+
+Naudojimas projekte:
+Šaltiniu remiamasi pagrindžiant CatBoost kaip gradientinio stiprinimo metodą.
+Hiperparametrai projekte parenkami empiriškai tik DEV rolling-origin skaidiniuose.
+
+
+4. MLP IR SCIKIT-LEARN
+
+scikit-learn. MLPRegressor dokumentacija.
+https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html
+
+Naudojimas projekte:
+Naudojamas `MLPRegressor`, `StandardScaler`, `SimpleImputer` ir kiti scikit-learn komponentai.
+MLP parametrai parenkami DEV dalyje.
+
+
+5. GRADIENT BOOSTING / VOTING KOMPONENTAI
+
+scikit-learn. GradientBoostingRegressor dokumentacija.
+https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
+
+scikit-learn. HistGradientBoostingRegressor dokumentacija.
+https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html
+
+Naudojimas projekte:
+Voting Ensemble sudarytas iš GBR ir HGBR. Galutinė prognozė skaičiuojama:
+y_hat = w*y_hat_GBR + (1-w)*y_hat_HGBR.
+Bazinių modelių parametrai ir svoris w parenkami tik DEV dalyje.
+
+
+6. OPTUNA
+
+Optuna dokumentacija.
+https://optuna.readthedocs.io/
+
+Naudojimas projekte:
+Optuna TPE naudota išsamesnei CatBoost ir Voting bazinių modelių hiperparametrų paieškai
+DEV dalyje. Galutinis TEST optimizavimui nenaudojamas.
+
+
+7. PYTORCH
+
+PyTorch dokumentacija.
+https://pytorch.org/docs/stable/
+
+Naudojimas projekte:
+Naudojamas N-BEATS tipo neuroninio tinklo realizacijai, Adam optimizatoriui,
+L1Loss ir DataLoader.
+
+
+PASTABA DĖL ŠALTINIŲ
+
+Moksliniai šaltiniai naudojami metodams pagrįsti, o programinių bibliotekų dokumentacija –
+konkrečių realizacijų parametrams ir funkcijoms tikrinti. Projekto skaitiniai rezultatai nėra
+perimti iš šių šaltinių: jie gauti paleidus projekto kodą su UCI Bike Sharing duomenimis.
